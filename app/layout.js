@@ -1,4 +1,3 @@
-import 'leaflet/dist/leaflet.css';
 import './globals.css';
 
 export const metadata = {
@@ -16,14 +15,14 @@ export default function RootLayout({ children }) {
               UrbanEye
             </a>
             <div className="flex items-center gap-6 text-sm font-medium">
-  <a href="/map" className="text-slate-300 hover:text-white transition">Map</a>
-  <a href="/report" className="text-slate-300 hover:text-white transition">Report</a>
-  <a href="/leaderboard" className="text-slate-300 hover:text-white transition">Leaderboard</a>
-  <a href="/dashboard" className="text-slate-300 hover:text-white transition">Dashboard</a>
-  <a href="/auth" className="bg-indigo-600 hover:bg-indigo-500 px-4 py-1.5 rounded-lg transition">
-    Login
-  </a>
-</div>
+              <a href="/map" className="text-slate-300 hover:text-white transition">Map</a>
+              <a href="/report" className="text-slate-300 hover:text-white transition">Report</a>
+              <a href="/leaderboard" className="text-slate-300 hover:text-white transition">Leaderboard</a>
+              <a href="/dashboard" className="text-slate-300 hover:text-white transition">Dashboard</a>
+              <a href="/auth" className="bg-indigo-600 hover:bg-indigo-500 px-4 py-1.5 rounded-lg transition">
+                Login
+              </a>
+            </div>
           </div>
         </nav>
         <main className="pt-16">
