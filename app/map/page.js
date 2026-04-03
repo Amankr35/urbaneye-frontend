@@ -1,13 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-import { supabase } from '../../lib/supabase';
+export const dynamic = 'force-dynamic';
 
-const MapContainer = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then(m => m.TileLayer), { ssr: false });
-const CircleMarker = dynamic(() => import('react-leaflet').then(m => m.CircleMarker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then(m => m.Popup), { ssr: false });
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabase';
 
 const severityColors = {
   minor: '#facc15',
@@ -19,30 +15,29 @@ export default function MapPage() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const [mounted, setMounted] = useState(false);
+  const [MapComponents, setMapComponents] = useState(null);
 
   useEffect(() => {
-    setMounted(true);
-
-    if (typeof window !== 'undefined') {
-      const L = require('leaflet');
-      delete L.Icon.Default.prototype._getIconUrl;
-      L.Icon.Default.mergeOptions({
+    async function loadMap() {
+      const L = await import('leaflet');
+      await import('leaflet/dist/leaflet.css');
+      delete L.default.Icon.Default.prototype._getIconUrl;
+      L.default.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
         iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
       });
+      const { MapContainer, TileLayer, CircleMarker, Popup } = await import('react-leaflet');
+      setMapComponents({ MapContainer, TileLayer, CircleMarker, Popup });
     }
 
+    loadMap();
     fetchReports();
   }, []);
 
   async function fetchReports() {
     const { data, error } = await supabase.from('reports').select('*');
-    if (error) {
-      console.error(error);
-      return;
-    }
+    if (error) { console.error(error); return; }
     setReports(data);
     setLoading(false);
   }
@@ -50,8 +45,6 @@ export default function MapPage() {
   const filtered = filter === 'all'
     ? reports
     : reports.filter(r => r.severity === filter);
-
-  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-10">
@@ -64,7 +57,6 @@ export default function MapPage() {
               {reports.length} verified reports across India
             </p>
           </div>
-
           <div className="flex gap-2">
             {['all', 'minor', 'moderate', 'severe'].map(f => (
               <button
@@ -95,22 +87,22 @@ export default function MapPage() {
         </div>
 
         <div className="rounded-2xl overflow-hidden border border-slate-800" style={{ height: '70vh' }}>
-          {loading ? (
+          {loading || !MapComponents ? (
             <div className="h-full flex items-center justify-center text-slate-400 bg-slate-900">
               Loading map...
             </div>
           ) : (
-            <MapContainer
+            <MapComponents.MapContainer
               center={[20.5937, 78.9629]}
               zoom={5}
               style={{ height: '100%', width: '100%' }}
             >
-              <TileLayer
+              <MapComponents.TileLayer
                 attribution='&copy; OpenStreetMap contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               {filtered.map((r) => (
-                <CircleMarker
+                <MapComponents.CircleMarker
                   key={r.id}
                   center={[r.lat, r.lng]}
                   radius={10}
@@ -119,7 +111,7 @@ export default function MapPage() {
                   weight={1.5}
                   fillOpacity={0.9}
                 >
-                  <Popup>
+                  <MapComponents.Popup>
                     <div className="text-sm">
                       <p className="font-semibold capitalize mb-1">
                         {r.severity} pothole
@@ -135,10 +127,10 @@ export default function MapPage() {
                         />
                       )}
                     </div>
-                  </Popup>
-                </CircleMarker>
+                  </MapComponents.Popup>
+                </MapComponents.CircleMarker>
               ))}
-            </MapContainer>
+            </MapComponents.MapContainer>
           )}
         </div>
 
