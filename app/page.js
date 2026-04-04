@@ -196,7 +196,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="max-w-5xl mx-auto px-6 pb-24">
+      <section className="max-w-5xl mx-auto px-6 pb-16">
         <div className="relative bg-indigo-600/10 border border-indigo-500/20 rounded-3xl p-12 text-center overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 to-transparent pointer-events-none" />
           <div className="relative z-10">
@@ -221,6 +221,10 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <div className="text-center pb-10 text-slate-500 text-sm">
+        Made with <span className="text-red-400">♥</span> by Aman
+      </div>
 
     </div>
   );
