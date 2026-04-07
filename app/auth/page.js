@@ -3,9 +3,21 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
+const INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+  'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  'Andaman and Nicobar Islands', 'Chandigarh', 'Delhi', 'Jammu and Kashmir',
+  'Ladakh', 'Lakshadweep', 'Puducherry'
+];
+
 export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [state, setState] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,15 +34,43 @@ export default function AuthPage() {
           setMessage(error.message);
         } else {
           setMessage('Login successful 🎉');
-          setTimeout(() => { window.location.href = '/report'; }, 500);
+          setTimeout(() => { window.location.href = '/dashboard'; }, 500);
         }
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        if (!name.trim()) {
+          setMessage('Please enter your name');
+          setLoading(false);
+          return;
+        }
+        if (!state) {
+          setMessage('Please select your state');
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: name.trim(), state }
+          }
+        });
+
         if (error) {
           setMessage(error.message);
         } else {
-          setMessage('Signup successful! Now login.');
+          if (data?.user) {
+            await supabase.from('profiles').upsert({
+              id: data.user.id,
+              full_name: name.trim(),
+              state,
+              total_points: 0,
+            });
+          }
+          setMessage('Account created! You can now log in.');
           setIsLogin(true);
+          setName('');
+          setState('');
         }
       }
     } catch (err) {
@@ -55,6 +95,30 @@ export default function AuthPage() {
         </div>
 
         <form onSubmit={handleAuth} className="flex flex-col gap-4">
+          {!isLogin && (
+            <>
+              <input
+                type="text"
+                placeholder="Your full name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+              />
+              <select
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                required
+                className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition"
+              >
+                <option value="" disabled>Select your state</option>
+                {INDIAN_STATES.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </>
+          )}
+
           <input
             type="email"
             placeholder="Email address"
@@ -83,7 +147,7 @@ export default function AuthPage() {
         </form>
 
         {message && (
-          <p className={`mt-4 text-center text-sm ${message.includes('❌') ? 'text-red-400' : 'text-green-400'}`}>
+          <p className={`mt-4 text-center text-sm ${message.includes('❌') || message.includes('error') ? 'text-red-400' : 'text-green-400'}`}>
             {message}
           </p>
         )}
@@ -91,7 +155,7 @@ export default function AuthPage() {
         <p className="mt-6 text-center text-sm text-slate-400">
           {isLogin ? "Don't have an account? " : 'Already have an account? '}
           <span
-            onClick={() => { setIsLogin(!isLogin); setMessage(''); }}
+            onClick={() => { setIsLogin(!isLogin); setMessage(''); setName(''); setState(''); }}
             className="text-indigo-400 hover:underline cursor-pointer font-medium"
           >
             {isLogin ? 'Sign up' : 'Log in'}
