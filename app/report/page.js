@@ -88,7 +88,7 @@ export default function ReportPage() {
 
       setStatus('Running AI verification...');
 
-      const res = await fetch('http://localhost:4000/api/reports/verify', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl: data.publicUrl }),
